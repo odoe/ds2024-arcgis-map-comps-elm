@@ -15,3 +15,7 @@ if (process.env.NODE_ENV === "development") {
 
 const root = document.querySelector("#app div");
 const app = Elm.Main.init({ node: root });
+
+app.ports.sendMapReady.subscribe((message) => {
+  console.log("Map is ready?", message);
+});

@@ -1,37 +1,59 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
 import HelloWorld exposing (helloWorld)
 import Html exposing (Html, div, img, text, h1, node)
+import Html.Events exposing (on)
 import Html.Attributes exposing (src, style, attribute)
 import Msg exposing (Msg(..))
+import Json.Decode as Decode
 import VitePluginHelper
 
-main : Program () Int Msg
+type alias Model =
+    { mapReady : Bool
+    }
+
+main : Program () Model Msg
 main =
-    Browser.sandbox { init = 0, update = update, view = view }
+  Browser.element
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = subscriptions
+    }
 
--- port sendMapReady : number -> Cmd msg
+port sendMapReady : Bool -> Cmd msg
 
-update : Msg -> number -> number
+init : () -> ( Model, Cmd Msg )
+init flags =
+  ( { mapReady = False }
+  , Cmd.none
+  )
+
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
-        Increment ->
-            model + 1
+        MapReady ->
+            ( { model | mapReady = True}
+            , sendMapReady True
+              )
 
-        Decrement ->
-            model - 1
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+  Sub.none
 
-        -- MapReady ->
-        --     sendMapReady 1
+onArcgisViewReadyChange : msg -> Html.Attribute msg
+onArcgisViewReadyChange message =
+  on "arcgisViewReadyChange" (Decode.succeed message)
 
-view : Int -> Html Msg
+view : Model -> Html Msg
 view model =
     div [ style "height" "100%" ]
         [ div [ style "height" "400px"]
         [
             node "arcgis-map"
-            [ attribute "item-id" "d5dda743788a4b0688fe48f43ae7beb9" ][]
+            [ attribute "item-id" "d5dda743788a4b0688fe48f43ae7beb9"
+            , onArcgisViewReadyChange MapReady][]
             ]
-        , helloWorld model
+        , helloWorld model.mapReady
         ]
